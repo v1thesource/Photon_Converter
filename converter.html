@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>Alpes Lasers photon wavelength converter!</p>
+
+Enter a value:<br>
+cm-1: <input type="number" id="cm" onkeyup="updateValues_cm()"> <br>
+µm: <input type="number" id="um" onkeyup="updateValues_um()"><br>
+eV: <input type="number" id="ev" onkeyup="updateValues_ev()"><br>
+THz: <input type="number" id="hz" onkeyup="updateValues_hz()"><br>
+
+<script>
+function updateValues_cm() {
+  var cm = document.getElementById("cm");
+  um.value = 10000/cm.value;
+  ev.value = cm.value*0.00012398419;
+  hz.value = cm.value*0.0299792458;
+}
+
+function updateValues_um() {
+  var um = document.getElementById("um");
+  cm.value = 10000/um.value;
+  ev.value = 1.2398419/um.value;
+  hz.value = cm.value*0.0299792458;
+}
+
+function updateValues_ev() {
+  var ev = document.getElementById("ev");
+  cm.value = ev.value/0.00012398419;
+  um.value = 10000/cm.value;
+  hz.value = cm.value*0.0299792458;
+}
+
+function updateValues_hz() {
+  var hz = document.getElementById("hz");
+  cm.value = hz.value/0.0299792458;
+  um.value = 10000/cm.value;
+  ev.value = cm.value*0.00012398419;
+}
+</script>
+
+</body>
+</html>
