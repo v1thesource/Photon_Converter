@@ -1,45 +1,855 @@
-
 <!DOCTYPE html>
-<html>
-<body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alpes Lasers Photon Converter</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              200: '#bae0fd',
+              300: '#7cc8fc',
+              400: '#38abf8',
+              500: '#0284c7', // Primary Brand Color
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Spectrum gradient representing EM spectrum colors loosely */
+    .spectrum-bar {
+      background: linear-gradient(to right,
+        #3b0764 0%,    /* UV / Violet */
+        #1d4ed8 15%,   /* Blue */
+        #047857 25%,   /* Green */
+        #b45309 35%,   /* Yellow/Orange */
+        #b91c1c 45%,   /* Red */
+        #450a0a 60%,   /* Near IR */
+        #1e1b4b 80%,   /* Mid IR */
+        #0f172a 100%   /* Far IR / THz */
+      );
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-300">
 
-<p>Alpes Lasers photon wavelength converter!</p>
+  <!-- Header Section -->
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-50 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-sky-600 rounded-lg text-white">
+          <i data-lucide="activity" class="h-6 w-6"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Alpes Lasers</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Photon Wavelength & Energy Converter</p>
+        </div>
+      </div>
 
-Enter a value:<br>
-cm-1: <input type="number" id="cm" onkeyup="updateValues_cm()"> <br>
-µm: <input type="number" id="um" onkeyup="updateValues_um()"><br>
-eV: <input type="number" id="ev" onkeyup="updateValues_ev()"><br>
-THz: <input type="number" id="hz" onkeyup="updateValues_hz()"><br>
+      <div class="flex items-center space-x-4">
+        <!-- Theme Toggle -->
+        <button id="theme-toggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+          <i id="theme-toggle-dark-icon" data-lucide="moon" class="h-5 w-5 hidden"></i>
+          <i id="theme-toggle-light-icon" data-lucide="sun" class="h-5 w-5 hidden"></i>
+        </button>
+        <!-- Info Help -->
+        <button id="help-toggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Show Information">
+          <i data-lucide="help-circle" class="h-5 w-5"></i>
+        </button>
+      </div>
+    </div>
+  </header>
 
-<script>
-function updateValues_cm() {
-  var cm = document.getElementById("cm");
-  um.value = 10000/cm.value;
-  ev.value = cm.value*0.00012398419;
-  hz.value = cm.value*0.0299792458;
-}
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Help / Information Modal (Collapsible alert) -->
+    <div id="help-box" class="hidden mb-8 p-6 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-2xl relative animate-fade-in">
+      <button id="close-help" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+        <i data-lucide="x" class="h-5 w-5"></i>
+      </button>
+      <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">About Alpes Lasers Photon Wavelength Converter</h3>
+      <p class="text-sm text-blue-800 dark:text-blue-400 leading-relaxed mb-4">
+        This high-precision tool quickly converts between standard units of photon wavelength, energy, frequency, and wavenumber. It is designed for quantum cascade laser (QCL) researchers, laser engineers, and spectroscopists working across mid-infrared and terahertz bands.
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-blue-800 dark:text-blue-400">
+        <div>
+          <strong class="block mb-1 text-blue-900 dark:text-blue-300">Conversion Formulas & Physics Constants:</strong>
+          <ul class="list-disc list-inside space-y-1">
+            <li>Wavelength to Wavenumber: <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">cm⁻¹ = 10,000 / µm</code></li>
+            <li>Energy to Wavenumber (Alpes): <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">cm⁻¹ = eV / 0.000123984193</code></li>
+            <li>Frequency to Wavenumber (Speed of Light): <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">cm⁻¹ = THz / 0.0299792458</code></li>
+          </ul>
+        </div>
+        <div>
+          <strong class="block mb-1 text-blue-900 dark:text-blue-300">Advanced Features:</strong>
+          <ul class="list-disc list-inside space-y-1">
+            <li><strong>Bidirectional real-time input:</strong> Modify any field and see all other units update instantly.</li>
+            <li><strong>Gas Sensing Presets:</strong> Quickly load typical absorption lines of molecules like CO₂, CH₄, etc.</li>
+            <li><strong>Interactive Spectrum Visualizer:</strong> See the active region and where it lies on the electromagnetic band.</li>
+            <li><strong>Conversion History:</strong> Track your calculations and copy values with one click.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
-function updateValues_um() {
-  var um = document.getElementById("um");
-  cm.value = 10000/um.value;
-  ev.value = 1.2398419/um.value;
-  hz.value = cm.value*0.0299792458;
-}
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-function updateValues_ev() {
-  var ev = document.getElementById("ev");
-  cm.value = ev.value/0.00012398419;
-  um.value = 10000/cm.value;
-  hz.value = cm.value*0.0299792458;
-}
+      <!-- Left 2 Columns: Converter & Visualizer -->
+      <div class="lg:col-span-2 space-y-8">
 
-function updateValues_hz() {
-  var hz = document.getElementById("hz");
-  cm.value = hz.value/0.0299792458;
-  um.value = 10000/cm.value;
-  ev.value = cm.value*0.00012398419;
-}
-</script>
+        <!-- Interactive Converter Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <i data-lucide="refresh-cw" class="h-5 w-5 text-sky-500"></i>
+              Converter
+            </h2>
+            <div class="flex items-center space-x-2">
+              <!-- Precision Selector -->
+              <label for="precision-select" class="text-xs text-slate-500 dark:text-slate-400">Decimals:</label>
+              <select id="precision-select" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-lg px-2 py-1 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                <option value="4">4</option>
+                <option value="6" selected>6</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+                <option value="auto">Auto</option>
+              </select>
 
+              <!-- Constants Mode Toggle -->
+              <select id="constants-mode" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-lg px-2 py-1 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                <option value="alpes" selected>Alpes Classic</option>
+                <option value="codata">CODATA 2018</option>
+              </select>
+
+              <button id="reset-button" class="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition" title="Reset all values">
+                <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Error Alert Banner -->
+          <div id="error-banner" class="hidden mb-4 p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-xl flex items-center gap-2 text-rose-700 dark:text-rose-400 text-xs">
+            <i data-lucide="alert-circle" class="h-4 w-4 flex-shrink-0"></i>
+            <span id="error-message">Wavelength must be greater than zero.</span>
+          </div>
+
+          <!-- Four Main Conversion Fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Wavenumber (cm-1) -->
+            <div class="relative group p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50 hover:border-sky-500/30 dark:hover:border-sky-500/30 transition">
+              <div class="flex justify-between items-center mb-1">
+                <label for="cm" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Wavenumber</label>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 mono">cm⁻¹</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <input type="number" id="cm" class="w-full bg-transparent text-xl font-bold text-slate-800 dark:text-white focus:outline-none mono" placeholder="0.0" step="any" oninput="updateValues_cm()">
+                <button onclick="copyToClipboard('cm')" class="p-1.5 text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition" title="Copy to clipboard">
+                  <i data-lucide="copy" class="h-4 w-4"></i>
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Spatial frequency of the wave</p>
+            </div>
+
+            <!-- Wavelength (um) -->
+            <div class="relative group p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50 hover:border-sky-500/30 dark:hover:border-sky-500/30 transition">
+              <div class="flex justify-between items-center mb-1">
+                <label for="um" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Wavelength</label>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 mono">µm</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <input type="number" id="um" class="w-full bg-transparent text-xl font-bold text-slate-800 dark:text-white focus:outline-none mono" placeholder="0.0" step="any" oninput="updateValues_um()">
+                <button onclick="copyToClipboard('um')" class="p-1.5 text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition" title="Copy to clipboard">
+                  <i data-lucide="copy" class="h-4 w-4"></i>
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Distance between wave crests</p>
+            </div>
+
+            <!-- Energy (eV) -->
+            <div class="relative group p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50 hover:border-sky-500/30 dark:hover:border-sky-500/30 transition">
+              <div class="flex justify-between items-center mb-1">
+                <label for="ev" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Energy</label>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 mono">eV</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <input type="number" id="ev" class="w-full bg-transparent text-xl font-bold text-slate-800 dark:text-white focus:outline-none mono" placeholder="0.0" step="any" oninput="updateValues_ev()">
+                <button onclick="copyToClipboard('ev')" class="p-1.5 text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition" title="Copy to clipboard">
+                  <i data-lucide="copy" class="h-4 w-4"></i>
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Energy carried by a single photon</p>
+            </div>
+
+            <!-- Frequency (THz) -->
+            <div class="relative group p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50 hover:border-sky-500/30 dark:hover:border-sky-500/30 transition">
+              <div class="flex justify-between items-center mb-1">
+                <label for="hz" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Frequency</label>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 mono">THz</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <input type="number" id="hz" class="w-full bg-transparent text-xl font-bold text-slate-800 dark:text-white focus:outline-none mono" placeholder="0.0" step="any" oninput="updateValues_hz()">
+                <button onclick="copyToClipboard('hz')" class="p-1.5 text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition" title="Copy to clipboard">
+                  <i data-lucide="copy" class="h-4 w-4"></i>
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Oscillations per second (Terahertz)</p>
+            </div>
+          </div>
+
+          <!-- Toast notification for copy success -->
+          <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transform translate-y-20 opacity-0 transition duration-300 pointer-events-none z-50">
+            <i data-lucide="check-circle" class="h-4 w-4"></i>
+            <span>Copied successfully!</span>
+          </div>
+        </div>
+
+        <!-- Spectrum Visualizer Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition">
+          <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i data-lucide="eye" class="h-5 w-5 text-sky-500"></i>
+            Electromagnetic Spectrum Visualizer
+          </h2>
+
+          <!-- Spectrum scale representation -->
+          <div class="relative py-8">
+            <div class="spectrum-bar h-6 w-full rounded-full shadow-inner relative">
+              <!-- Grid Tick Marks -->
+              <div class="absolute inset-0 flex justify-between px-2 text-[9px] text-white/70 font-semibold items-center select-none pointer-events-none">
+                <span>0.1 µm</span>
+                <span>1 µm</span>
+                <span>3 µm</span>
+                <span>8 µm</span>
+                <span>15 µm</span>
+                <span>50 µm</span>
+                <span>300 µm</span>
+              </div>
+
+              <!-- Sliding Marker Pin -->
+              <div id="spectrum-marker" class="absolute top-1/2 -translate-y-1/2 -ml-3 left-0 transition-all duration-300 flex flex-col items-center select-none" style="left: 50%;">
+                <div class="w-6 h-6 rounded-full bg-white border-2 border-sky-600 shadow-md flex items-center justify-center">
+                  <div class="w-2.5 h-2.5 rounded-full bg-sky-600 animate-ping absolute"></div>
+                  <div class="w-2 h-2 rounded-full bg-sky-600"></div>
+                </div>
+                <!-- Triangle pointing down -->
+                <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white dark:border-t-slate-900 -mt-0.5"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Band metadata display -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Spectral Region:</p>
+              <h3 id="region-name" class="text-lg font-bold text-sky-600 dark:text-sky-400">-</h3>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Common Applications:</p>
+              <p id="region-apps" class="text-sm text-slate-600 dark:text-slate-300">-</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formula Guide & Equations Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition">
+          <h2 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i data-lucide="book-open" class="h-5 w-5 text-sky-500"></i>
+            Active Conversion Formulas & Physics constants
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-slate-600 dark:text-slate-400">
+            <div class="space-y-2">
+              <h3 class="font-bold text-slate-700 dark:text-slate-300">Formulas:</h3>
+              <ul class="space-y-1.5">
+                <li class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                  Wavelength & Wavenumber: <span class="mono ml-auto">λ (µm) = 10,000 / ν̃</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                  Energy & Wavenumber: <span class="mono ml-auto">E (eV) = ν̃ * h_factor</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                  Frequency & Wavenumber: <span class="mono ml-auto">f (THz) = ν̃ * 0.0299792458</span>
+                </li>
+              </ul>
+            </div>
+            <div class="space-y-2">
+              <h3 class="font-bold text-slate-700 dark:text-slate-300">Constants being used:</h3>
+              <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1.5">
+                <div class="flex justify-between">
+                  <span>Speed of Light (c):</span>
+                  <span class="mono text-slate-800 dark:text-slate-200 font-semibold text-[11px]">299,792,458 m/s</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>eV Factor:</span>
+                  <span class="mono text-slate-800 dark:text-slate-200 font-semibold text-[11px]" id="factor-display">0.000123984193</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Planck constant (h):</span>
+                  <span class="mono text-slate-800 dark:text-slate-200 font-semibold text-[11px]">6.62607015 × 10⁻³⁴ J·s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Presets & History -->
+      <div class="space-y-8">
+
+        <!-- Quick Presets -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition">
+          <h2 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i data-lucide="layers" class="h-5 w-5 text-sky-500"></i>
+            Gas-Sensing & Alpes QCL Presets
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            Click on any molecule or typical QCL configuration preset to instantly populate the wavelength parameters.
+          </p>
+
+          <div class="space-y-6">
+            <!-- Greenhouse / Gas Sensing -->
+            <div>
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5">Gas Sensing Absorption Lines</h3>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="applyPreset(2347.4178)" class="flex flex-col items-start p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
+                  <span class="text-xs font-bold text-slate-800 dark:text-white">CO₂ Carbon Dioxide</span>
+                  <span class="text-[10px] text-slate-500 dark:text-slate-400 mono">4.26 µm (2347.4 cm⁻¹)</span>
+                </button>
+                <button onclick="applyPreset(3058.104)" class="flex flex-col items-start p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
+                  <span class="text-xs font-bold text-slate-800 dark:text-white">CH₄ Methane</span>
+                  <span class="text-[10px] text-slate-500 dark:text-slate-400 mono">3.27 µm (3058.1 cm⁻¹)</span>
+                </button>
+                <button onclick="applyPreset(2173.913)" class="flex flex-col items-start p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
+                  <span class="text-xs font-bold text-slate-800 dark:text-white">CO Carbon Monoxide</span>
+                  <span class="text-[10px] text-slate-500 dark:text-slate-400 mono">4.60 µm (2173.9 cm⁻¹)</span>
+                </button>
+                <button onclick="applyPreset(2222.222)" class="flex flex-col items-start p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
+                  <span class="text-xs font-bold text-slate-800 dark:text-white">N₂O Nitrous Oxide</span>
+                  <span class="text-[10px] text-slate-500 dark:text-slate-400 mono">4.50 µm (2222.2 cm⁻¹)</span>
+                </button>
+                <button onclick="applyPreset(3703.704)" class="flex flex-col items-start p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
+                  <span class="text-xs font-bold text-slate-800 dark:text-white">H₂O Water Vapor</span>
+                  <span class="text-[10px] text-slate-500 dark:text-slate-400 mono">2.70 µm (3703.7 cm⁻¹)</span>
+                </button>
+                <button onclick="applyPreset(970.874)" class="flex flex-col items-start p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
+                  <span class="text-xs font-bold text-slate-800 dark:text-white">NH₃ Ammonia</span>
+                  <span class="text-[10px] text-slate-500 dark:text-slate-400 mono">10.30 µm (970.8 cm⁻¹)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Alpes standard sources -->
+            <div>
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5">Typical Alpes Laser Ranges</h3>
+              <div class="space-y-2">
+                <button onclick="applyPreset(1818.182)" class="w-full flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
+                  <div class="flex flex-col">
+                    <span class="text-xs font-bold text-slate-800 dark:text-white">Mid-IR QCL Source (Typical DFB)</span>
+                    <span class="text-[10px] text-slate-400">Popular room-temperature gas sensing range</span>
+                  </div>
+                  <span class="text-xs font-semibold mono text-sky-600 dark:text-sky-400">5.5 µm</span>
+                </button>
+                <button onclick="applyPreset(100.000)" class="w-full flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
+                  <div class="flex flex-col">
+                    <span class="text-xs font-bold text-slate-800 dark:text-white">Terahertz (THz) QCL Source</span>
+                    <span class="text-[10px] text-slate-400">Low-frequency submillimeter astronomy / imaging</span>
+                  </div>
+                  <span class="text-xs font-semibold mono text-sky-600 dark:text-sky-400">100 µm</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Log -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <i data-lucide="history" class="h-5 w-5 text-sky-500"></i>
+              Conversion History
+            </h2>
+            <button id="clear-history" class="text-xs text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 font-semibold transition" title="Clear all history">
+              Clear
+            </button>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            Automatically logs recent conversion points for easy reference.
+          </p>
+
+          <!-- Scrollable history list -->
+          <div class="max-h-60 overflow-y-auto space-y-2 pr-1" id="history-container">
+            <p id="history-empty" class="text-xs text-slate-400 dark:text-slate-500 text-center py-6 italic">No history logged yet.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 mt-16 bg-white dark:bg-slate-950 py-8 transition">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+      <p>&copy; <span id="current-year"></span> Alpes Lasers Converter Dashboard. Highly optimized for performance and precision.</p>
+      <div class="flex space-x-6 mt-4 md:mt-0">
+        <a href="https://v1thesource.github.io/Photon_Converter/" target="_blank" class="hover:text-sky-500 transition">GitHub Page</a>
+        <a href="https://www.alpeslasers.ch" target="_blank" class="hover:text-sky-500 transition">Alpes Lasers Website</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Initialize current year in footer
+    document.getElementById("current-year").textContent = new Date().getFullYear();
+
+    // Theme Toggle Functionality
+    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+    // Change the icons inside button based on previous settings
+    if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        themeToggleLightIcon.classList.remove('hidden');
+    } else {
+        document.documentElement.classList.remove('dark');
+        themeToggleDarkIcon.classList.remove('hidden');
+    }
+
+    const themeToggleBtn = document.getElementById('theme-toggle');
+
+    themeToggleBtn.addEventListener('click', function() {
+        // toggle icons inside button
+        themeToggleDarkIcon.classList.toggle('hidden');
+        themeToggleLightIcon.classList.toggle('hidden');
+
+        // if set via local storage previously
+        if (localStorage.getItem('color-theme')) {
+            if (localStorage.getItem('color-theme') === 'light') {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            }
+        // if not set via local storage previously
+        } else {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            }
+        }
+    });
+
+    // Help box toggle
+    const helpToggle = document.getElementById('help-toggle');
+    const helpBox = document.getElementById('help-box');
+    const closeHelp = document.getElementById('close-help');
+
+    helpToggle.addEventListener('click', () => {
+      helpBox.classList.toggle('hidden');
+    });
+
+    closeHelp.addEventListener('click', () => {
+      helpBox.classList.add('hidden');
+    });
+
+    // --- High Precision Conversion Math and Constants ---
+    // Physical Constants
+    const CONSTANTS = {
+      alpes: {
+        ev_factor: 0.000123984193, // classic factor
+        thz_factor: 0.0299792458  // 1/33.3564... speed of light factor
+      },
+      codata: {
+        // CODATA 2018 high precision values
+        // h = 6.62607015e-34 J s
+        // c = 299792458 m/s
+        // e = 1.602176634e-19 C
+        // E (eV) = h * c * nu_tilde (m^-1) / e
+        // Since nu_tilde is in cm^-1, 1 cm^-1 = 100 m^-1
+        // E (eV) = h * c * (nu_tilde * 100) / e = nu_tilde * (h * c * 100 / e)
+        // Let factor = h * c * 100 / e
+        // h * c * 100 / e = 6.62607015e-34 * 299792458 * 100 / 1.602176634e-19
+        // = 1.2398419843320026e-4
+        ev_factor: 0.0001239841984332,
+        thz_factor: 0.0299792458
+      }
+    };
+
+    // DOM Elements
+    const elements = {
+      cm: document.getElementById('cm'),
+      um: document.getElementById('um'),
+      ev: document.getElementById('ev'),
+      hz: document.getElementById('hz'),
+      precisionSelect: document.getElementById('precision-select'),
+      constantsMode: document.getElementById('constants-mode'),
+      resetButton: document.getElementById('reset-button'),
+      errorBanner: document.getElementById('error-banner'),
+      errorMessage: document.getElementById('error-message'),
+      factorDisplay: document.getElementById('factor-display'),
+      spectrumMarker: document.getElementById('spectrum-marker'),
+      regionName: document.getElementById('region-name'),
+      regionApps: document.getElementById('region-apps'),
+      historyContainer: document.getElementById('history-container'),
+      historyEmpty: document.getElementById('history-empty'),
+      clearHistory: document.getElementById('clear-history'),
+      toast: document.getElementById('toast')
+    };
+
+    let activeConstantsMode = 'alpes';
+    let activePrecision = '6';
+    let historyList = [];
+
+    // Format number to output safely based on precision setting
+    function formatValue(val) {
+      if (isNaN(val) || !isFinite(val)) return '';
+      if (activePrecision === 'auto') {
+        // Use standard JS auto-precision logic
+        if (val === 0) return '0';
+        if (Math.abs(val) < 1e-4 || Math.abs(val) > 1e6) {
+          return val.toExponential(6);
+        }
+        return parseFloat(val.toFixed(8)).toString(); // strip extra trailing zeroes
+      } else {
+        const dec = parseInt(activePrecision, 10);
+        // If the number is extremely small or large, output scientific notation
+        if (val !== 0 && (Math.abs(val) < Math.pow(10, -dec) || Math.abs(val) > 1e7)) {
+          return val.toExponential(dec);
+        }
+        return val.toFixed(dec);
+      }
+    }
+
+    // Show error message
+    function showError(msg) {
+      if (msg) {
+        elements.errorMessage.textContent = msg;
+        elements.errorBanner.classList.remove('hidden');
+      } else {
+        elements.errorBanner.classList.add('hidden');
+      }
+    }
+
+    // Parse input securely, returning null if invalid or <= 0
+    function parseInput(inputVal) {
+      const parsed = parseFloat(inputVal);
+      if (isNaN(parsed)) {
+        return null;
+      }
+      if (parsed <= 0) {
+        showError('Value must be a positive non-zero number.');
+        return null;
+      }
+      showError(null);
+      return parsed;
+    }
+
+    // Get current factors
+    function getFactors() {
+      return CONSTANTS[activeConstantsMode];
+    }
+
+    // Main update functions triggered by oninput
+    function updateValues_cm() {
+      const val = parseInput(elements.cm.value);
+      if (val === null) {
+        clearOtherFields('cm');
+        return;
+      }
+      const factors = getFactors();
+      const calculated = {
+        um: 10000 / val,
+        ev: val * factors.ev_factor,
+        hz: val * factors.thz_factor
+      };
+
+      elements.um.value = formatValue(calculated.um);
+      elements.ev.value = formatValue(calculated.ev);
+      elements.hz.value = formatValue(calculated.hz);
+
+      updateSpectrum(calculated.um);
+      addToHistoryDebounced(val, calculated.um, calculated.ev, calculated.hz);
+    }
+
+    function updateValues_um() {
+      const val = parseInput(elements.um.value);
+      if (val === null) {
+        clearOtherFields('um');
+        return;
+      }
+      const factors = getFactors();
+      const cm_val = 10000 / val;
+      const calculated = {
+        cm: cm_val,
+        ev: cm_val * factors.ev_factor,
+        hz: cm_val * factors.thz_factor
+      };
+
+      elements.cm.value = formatValue(calculated.cm);
+      elements.ev.value = formatValue(calculated.ev);
+      elements.hz.value = formatValue(calculated.hz);
+
+      updateSpectrum(val);
+      addToHistoryDebounced(calculated.cm, val, calculated.ev, calculated.hz);
+    }
+
+    function updateValues_ev() {
+      const val = parseInput(elements.ev.value);
+      if (val === null) {
+        clearOtherFields('ev');
+        return;
+      }
+      const factors = getFactors();
+      const cm_val = val / factors.ev_factor;
+      const calculated = {
+        cm: cm_val,
+        um: 10000 / cm_val,
+        hz: cm_val * factors.thz_factor
+      };
+
+      elements.cm.value = formatValue(calculated.cm);
+      elements.um.value = formatValue(calculated.um);
+      elements.hz.value = formatValue(calculated.hz);
+
+      updateSpectrum(calculated.um);
+      addToHistoryDebounced(calculated.cm, calculated.um, val, calculated.hz);
+    }
+
+    function updateValues_hz() {
+      const val = parseInput(elements.hz.value);
+      if (val === null) {
+        clearOtherFields('hz');
+        return;
+      }
+      const factors = getFactors();
+      const cm_val = val / factors.thz_factor;
+      const calculated = {
+        cm: cm_val,
+        um: 10000 / cm_val,
+        ev: cm_val * factors.ev_factor
+      };
+
+      elements.cm.value = formatValue(calculated.cm);
+      elements.um.value = formatValue(calculated.um);
+      elements.ev.value = formatValue(calculated.ev);
+
+      updateSpectrum(calculated.um);
+      addToHistoryDebounced(calculated.cm, calculated.um, calculated.ev, val);
+    }
+
+    function clearOtherFields(keepField) {
+      if (keepField !== 'cm') elements.cm.value = '';
+      if (keepField !== 'um') elements.um.value = '';
+      if (keepField !== 'ev') elements.ev.value = '';
+      if (keepField !== 'hz') elements.hz.value = '';
+      updateSpectrum(null);
+    }
+
+    // Spectrum Mapping Logic
+    // We map µm log-scale from 0.1 µm to 300 µm onto 0% - 100%
+    function updateSpectrum(um) {
+      if (!um || isNaN(um) || um <= 0) {
+        elements.spectrumMarker.style.left = '50%';
+        elements.regionName.textContent = '-';
+        elements.regionApps.textContent = 'Enter a valid photon parameter above to inspect spectral region details.';
+        return;
+      }
+
+      // Compute logarithmic percentage
+      const minUm = 0.1;
+      const maxUm = 300;
+      const logMin = Math.log10(minUm);
+      const logMax = Math.log10(maxUm);
+      const logVal = Math.log10(um);
+
+      let pct = ((logVal - logMin) / (logMax - logMin)) * 100;
+      pct = Math.max(0, Math.min(100, pct)); // clamp to 0-100%
+
+      elements.spectrumMarker.style.left = `${pct}%`;
+
+      // Determine region description
+      let region = '';
+      let apps = '';
+
+      if (um < 0.38) {
+        region = 'Ultraviolet (UV) / Deep UV';
+        apps = 'Chemical analysis, lithography, sterilization, UV fluorescence spectroscopy.';
+      } else if (um >= 0.38 && um < 0.75) {
+        region = 'Visible Light (VIS)';
+        apps = 'Human eye sensing, display tech, optical microscopy, RGB laser diodes.';
+      } else if (um >= 0.75 && um < 3.0) {
+        region = 'Near-Infrared (Near-IR / ICL)';
+        apps = 'Telecom fiber optics (1.3/1.55 µm), gas sensing (methane/water), interband cascade lasers (ICLs).';
+      } else if (um >= 3.0 && um < 15.0) {
+        region = 'Mid-Infrared (Mid-IR / Typical QCL)';
+        apps = ' Alpes Lasers flagship range. Molecular finger-print gas spectroscopy, CO₂ absorption, chemical defense.';
+      } else if (um >= 15.0 && um < 50.0) {
+        region = 'Far-Infrared (Far-IR / Longwave QCL)';
+        apps = 'Space astronomy, atmospheric sounding, specialized long-wave chemical sensing.';
+      } else {
+        region = 'Terahertz (THz) / Submillimeter';
+        apps = 'Non-destructive industrial imaging, security scanners, low-frequency molecular dynamics, THz QCL sources.';
+      }
+
+      elements.regionName.textContent = region;
+      elements.regionApps.textContent = apps;
+    }
+
+    // Copy to clipboard with success state
+    function copyToClipboard(id) {
+      const input = document.getElementById(id);
+      if (!input || !input.value) return;
+
+      navigator.clipboard.writeText(input.value).then(() => {
+        // Show Toast Notification
+        elements.toast.classList.remove('opacity-0', 'translate-y-20', 'pointer-events-none');
+        elements.toast.classList.add('opacity-100', 'translate-y-0');
+
+        setTimeout(() => {
+          elements.toast.classList.remove('opacity-100', 'translate-y-0');
+          elements.toast.classList.add('opacity-0', 'translate-y-20', 'pointer-events-none');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    }
+
+    // Apply Presets
+    window.applyPreset = function(cmValue) {
+      elements.cm.value = cmValue;
+      updateValues_cm();
+    }
+
+    // Debouncing for History logging to prevent spamming while typing
+    let historyTimeout = null;
+    function addToHistoryDebounced(cm, um, ev, hz) {
+      clearTimeout(historyTimeout);
+      historyTimeout = setTimeout(() => {
+        addPointToHistory(cm, um, ev, hz);
+      }, 800);
+    }
+
+    function addPointToHistory(cm, um, ev, hz) {
+      const item = {
+        id: Date.now(),
+        cm: formatValue(cm),
+        um: formatValue(um),
+        ev: formatValue(ev),
+        hz: formatValue(hz),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      };
+
+      historyList.unshift(item);
+      if (historyList.length > 20) historyList.pop(); // limit to 20
+
+      renderHistory();
+    }
+
+    function renderHistory() {
+      if (historyList.length === 0) {
+        elements.historyEmpty.classList.remove('hidden');
+        // Clear history children except empty placeholder
+        const children = [...elements.historyContainer.children];
+        children.forEach(c => {
+          if (c.id !== 'history-empty') c.remove();
+        });
+        return;
+      }
+
+      elements.historyEmpty.classList.add('hidden');
+
+      // Clear dynamic history elements
+      const children = [...elements.historyContainer.children];
+      children.forEach(c => {
+        if (c.id !== 'history-empty') c.remove();
+      });
+
+      historyList.forEach(item => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'p-3 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 text-[11px] hover:border-sky-500/20 transition relative group';
+        itemEl.innerHTML = `
+          <div class="flex justify-between items-center text-slate-400 dark:text-slate-500 mb-1">
+            <span class="font-semibold text-sky-600 dark:text-sky-400">Conversion Point</span>
+            <span>${item.time}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-slate-700 dark:text-slate-300 mono">
+            <div>Wavenumber: <span class="font-semibold text-slate-900 dark:text-white">${item.cm} cm⁻¹</span></div>
+            <div>Wavelength: <span class="font-semibold text-slate-900 dark:text-white">${item.um} µm</span></div>
+            <div>Energy: <span class="font-semibold text-slate-900 dark:text-white">${item.ev} eV</span></div>
+            <div>Frequency: <span class="font-semibold text-slate-900 dark:text-white">${item.hz} THz</span></div>
+          </div>
+        `;
+        elements.historyContainer.appendChild(itemEl);
+      });
+    }
+
+    // Reset All Fields
+    elements.resetButton.addEventListener('click', () => {
+      elements.cm.value = '';
+      elements.um.value = '';
+      elements.ev.value = '';
+      elements.hz.value = '';
+      showError(null);
+      updateSpectrum(null);
+    });
+
+    // Clear History Button
+    elements.clearHistory.addEventListener('click', () => {
+      historyList = [];
+      renderHistory();
+    });
+
+    // Listeners for selectors
+    elements.precisionSelect.addEventListener('change', (e) => {
+      activePrecision = e.target.value;
+      // Re-convert current values if any are set
+      if (elements.cm.value) {
+        updateValues_cm();
+      }
+    });
+
+    elements.constantsMode.addEventListener('change', (e) => {
+      activeConstantsMode = e.target.value;
+      const factors = getFactors();
+      elements.factorDisplay.textContent = factors.ev_factor;
+      if (elements.cm.value) {
+        updateValues_cm();
+      }
+    });
+
+    // Initialize with a pleasant default preset (CO2 laser / typical QCL) on startup
+    applyPreset(2347.4178);
+
+    // Initial Lucide Icons Render
+    lucide.createIcons();
+  </script>
 </body>
 </html>
