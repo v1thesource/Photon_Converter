@@ -228,16 +228,19 @@
 
         <!-- Spectrum Visualizer Card -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition">
-          <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+          <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
             <i data-lucide="eye" class="h-5 w-5 text-sky-500"></i>
             Electromagnetic Spectrum Visualizer
           </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            Drag the visual marker or click anywhere along the spectrum bar to interactively adjust the wavelength in real-time.
+          </p>
 
           <!-- Spectrum scale representation -->
           <div class="relative py-8">
-            <div class="spectrum-bar h-6 w-full rounded-full shadow-inner relative">
+            <div id="spectrum-bar-container" class="spectrum-bar h-8 w-full rounded-full shadow-inner relative cursor-pointer select-none">
               <!-- Grid Tick Marks -->
-              <div class="absolute inset-0 flex justify-between px-2 text-[9px] text-white/70 font-semibold items-center select-none pointer-events-none">
+              <div class="absolute inset-0 flex justify-between px-3 text-[10px] text-white/80 font-bold items-center select-none pointer-events-none">
                 <span>0.1 µm</span>
                 <span>1 µm</span>
                 <span>3 µm</span>
@@ -248,10 +251,10 @@
               </div>
 
               <!-- Sliding Marker Pin -->
-              <div id="spectrum-marker" class="absolute top-1/2 -translate-y-1/2 -ml-3 left-0 transition-all duration-300 flex flex-col items-center select-none" style="left: 50%;">
-                <div class="w-6 h-6 rounded-full bg-white border-2 border-sky-600 shadow-md flex items-center justify-center">
-                  <div class="w-2.5 h-2.5 rounded-full bg-sky-600 animate-ping absolute"></div>
-                  <div class="w-2 h-2 rounded-full bg-sky-600"></div>
+              <div id="spectrum-marker" class="absolute top-1/2 -translate-y-1/2 -ml-3.5 left-0 transition-all duration-300 flex flex-col items-center select-none cursor-grab active:cursor-grabbing" style="left: 50%;">
+                <div class="w-7 h-7 rounded-full bg-white border-2 border-sky-600 shadow-lg flex items-center justify-center">
+                  <div class="w-3 h-3 rounded-full bg-sky-600 animate-ping absolute"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-sky-600"></div>
                 </div>
                 <!-- Triangle pointing down -->
                 <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white dark:border-t-slate-900 -mt-0.5"></div>
@@ -354,7 +357,7 @@
                 </button>
                 <button onclick="applyPreset(3703.704)" class="flex flex-col items-start p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
                   <span class="text-xs font-bold text-slate-800 dark:text-white">H₂O Water Vapor</span>
-                  <span class="text-[10px] text-slate-500 dark:text-slate-400 mono">2.70 µm (3703.7 cm⁻¹)</span>
+                  <span class="text-[10px] text-slate-400 mono">2.70 µm (3703.7 cm⁻¹)</span>
                 </button>
                 <button onclick="applyPreset(970.874)" class="flex flex-col items-start p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:border-sky-500/50 border border-slate-100 dark:border-slate-800 rounded-xl transition text-left">
                   <span class="text-xs font-bold text-slate-800 dark:text-white">NH₃ Ammonia</span>
@@ -489,15 +492,6 @@
       },
       codata: {
         // CODATA 2018 high precision values
-        // h = 6.62607015e-34 J s
-        // c = 299792458 m/s
-        // e = 1.602176634e-19 C
-        // E (eV) = h * c * nu_tilde (m^-1) / e
-        // Since nu_tilde is in cm^-1, 1 cm^-1 = 100 m^-1
-        // E (eV) = h * c * (nu_tilde * 100) / e = nu_tilde * (h * c * 100 / e)
-        // Let factor = h * c * 100 / e
-        // h * c * 100 / e = 6.62607015e-34 * 299792458 * 100 / 1.602176634e-19
-        // = 1.2398419843320026e-4
         ev_factor: 0.0001239841984332,
         thz_factor: 0.0299792458
       }
@@ -516,6 +510,7 @@
       errorMessage: document.getElementById('error-message'),
       factorDisplay: document.getElementById('factor-display'),
       spectrumMarker: document.getElementById('spectrum-marker'),
+      spectrumBarContainer: document.getElementById('spectrum-bar-container'),
       regionName: document.getElementById('region-name'),
       regionApps: document.getElementById('region-apps'),
       historyContainer: document.getElementById('history-container'),
@@ -527,6 +522,7 @@
     let activeConstantsMode = 'alpes';
     let activePrecision = '6';
     let historyList = [];
+    let isDragging = false;
 
     // Format number to output safely based on precision setting
     function formatValue(val) {
@@ -599,6 +595,26 @@
       addToHistoryDebounced(val, calculated.um, calculated.ev, calculated.hz);
     }
 
+    // Custom non-debounced direct wavelength changes for draggable interactions
+    function updateValues_um_direct() {
+      const val = parseFloat(elements.um.value);
+      if (isNaN(val) || val <= 0) return;
+      const factors = getFactors();
+      const cm_val = 10000 / val;
+      const calculated = {
+        cm: cm_val,
+        ev: cm_val * factors.ev_factor,
+        hz: cm_val * factors.thz_factor
+      };
+
+      elements.cm.value = formatValue(calculated.cm);
+      elements.ev.value = formatValue(calculated.ev);
+      elements.hz.value = formatValue(calculated.hz);
+
+      updateSpectrum(val);
+      addToHistoryDebounced(calculated.cm, val, calculated.ev, calculated.hz);
+    }
+
     function updateValues_um() {
       const val = parseInput(elements.um.value);
       if (val === null) {
@@ -641,6 +657,12 @@
 
       updateSpectrum(calculated.um);
       addToHistoryDebounced(calculated.cm, calculated.um, val, calculated.hz);
+    }
+
+    // Wavelength update from dragging
+    function updateWavelengthFromDrag(um_val) {
+      elements.um.value = formatValue(um_val);
+      updateValues_um_direct();
     }
 
     function updateValues_hz() {
@@ -723,6 +745,66 @@
       elements.regionApps.textContent = apps;
     }
 
+    // --- Interactive Drag and Drop for the Spectrum Visualizer ---
+    function handleSpectrumInteraction(e) {
+      const rect = elements.spectrumBarContainer.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      let offsetX = clientX - rect.left;
+      offsetX = Math.max(0, Math.min(rect.width, offsetX));
+
+      const pct = offsetX / rect.width; // 0.0 to 1.0
+
+      // Map back from log percentage to µm scale
+      const minUm = 0.1;
+      const maxUm = 300;
+      const logMin = Math.log10(minUm);
+      const logMax = Math.log10(maxUm);
+
+      const logVal = logMin + pct * (logMax - logMin);
+      const computedUm = Math.pow(10, logVal);
+
+      // Disable transition-all temporarily during dragging so pointer moves smoothly
+      elements.spectrumMarker.classList.remove('transition-all', 'duration-300');
+
+      updateWavelengthFromDrag(computedUm);
+    }
+
+    elements.spectrumBarContainer.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      handleSpectrumInteraction(e);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      handleSpectrumInteraction(e);
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        // Re-enable transition smoothly after releasing
+        elements.spectrumMarker.classList.add('transition-all', 'duration-300');
+      }
+    });
+
+    // Touch Support for mobile dragging
+    elements.spectrumBarContainer.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      handleSpectrumInteraction(e);
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      handleSpectrumInteraction(e);
+    });
+
+    window.addEventListener('touchend', () => {
+      if (isDragging) {
+        isDragging = false;
+        elements.spectrumMarker.classList.add('transition-all', 'duration-300');
+      }
+    });
+
     // Copy to clipboard with success state
     function copyToClipboard(id) {
       const input = document.getElementById(id);
@@ -744,6 +826,7 @@
 
     // Apply Presets
     window.applyPreset = function(cmValue) {
+      elements.spectrumMarker.classList.add('transition-all', 'duration-300');
       elements.cm.value = cmValue;
       updateValues_cm();
     }
